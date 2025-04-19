@@ -37,52 +37,63 @@ BIN_CONSOLE              := $(PHP) bin/console
 DOCKER_CONTAINER_API_DIR := docker run --rm -v $(PWD)/$(API_DIR):/app -w /app # required docker image name, volume to api dir
 
 init: ## Run app
-	@make down \
+	@make docker-down-clear \
 		api-clear \
- 		build up
+ 		docker-pull docker-build docker-up \
+ 		api-init
 .PHONY: init
 
-prepare: ## Init common configs
-	@echo 'APP_SECRET=99eaebf0b00eab05c0042c16fe4f71ce' > $(API_DIR)/.env.local
-	@echo 'APP_DEBUG=1' >> $(API_DIR)/.env.local
+prepare: api-prepare
 .PHONY: prepare
 
-vendor: ## Install all dependencies
-	$(COMPOSER_BIN) install --prefer-dist --no-progress --optimize-autoloader
-.PHONY: vendor
+up: docker-up
+.PHONY: up
+
+down: docker-down
+.PHONY: down
+
+restart: down up
+.PHONY: restart
+
+logs: docker-logs
+.PHONY: logs
 
 ##
 ## Docker commands
 ## ------
 
-up: ## Run docker app
+docker-up: ## Run docker app
 	$(DOCKER_COMPOSE) up --build --remove-orphans --detach
-.PHONY: up
+.PHONY: docker-up
 
-down: ## Stop docker app
+docker-down: ## Stop docker app
 	$(DOCKER_COMPOSE) down --remove-orphans
-.PHONY: stop
+.PHONY: docker-down
 
-down-clear: ## Docker down, remove old containers, remove volumes
+docker-down-clear: ## Docker down, remove old containers, remove volumes
 	$(DOCKER_COMPOSE) down -v --remove-orphans
-.PHONY: down-clear
+.PHONY: docker-down-clear
 
-down-and-remove-all-containers: ## Stop and remove every container
+docker-down-and-remove-all-containers: ## Stop and remove every container
 	docker stop $$(docker ps -qa)
 	docker rm $$(docker ps -qa)
-.PHONY: down-and-remove-all-containers
+.PHONY: docker-down-and-remove-all-containers
 
-build: ## Build docker images
+docker-pull: ## Pull docker images
 	$(DOCKER_BAKE) $(APP_ENV)
-.PHONY: build
+.PHONY: docker-pull
 
-build-no-cache: ## Build docker images
+docker-build: ## Build docker images
+	$(DOCKER_BAKE) $(APP_ENV)
+.PHONY: docker-build
+
+docker-build-no-cache: ## Build docker images
 	USE_DOCKER_CACHE=0 $(DOCKER_BAKE) $(APP_ENV)
-.PHONY: build-no-cache
+.PHONY: docker-build-no-cache
 
-logs: ## Print docker compose logs
+docker-logs: ## Print docker compose logs
 	$(DOCKER_COMPOSE) logs
-.PHONY: logs
+.PHONY: docker-logs
 
 generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in the following format: some_name.htpasswd
 	@DEFAULT_BASIC_AUTH_FILENAME=main; \
@@ -97,13 +108,16 @@ generate-basic-auth: ## Generate a HTTP Basic Authentication credentials file in
 	echo "File '$$CONFIG_DIR/$${NEW_BASIC_AUTH_FILENAME}' created with credentials: $${AUTH_USERNAME}:$${AUTH_PASSWORD}"
 .PHONY: generate-basic-auth
 
-composer-container-interactive: ## Run composer:lastest docker container interactive
+docker-composer-interactive: ## Run composer:lastest docker container interactive
 	$(DOCKER_CONTAINER_API_DIR) -it composer:latest /bin/bash
-.PHONY: composer-container-interactive
+.PHONY: docker-composer-interactive
 
 ##
 ## API commands
 ## ------
+
+api-init: #api-deps-install
+.PHONY: api-init
 
 api-cli: ## Run interactive php-cli container
 	$(PHP_CONTAINER_SHELL) /bin/bash
@@ -113,9 +127,18 @@ api-clear: ## Delete all items except with '.' in start
 	$(DOCKER_CONTAINER_API_DIR) alpine sh -c 'rm -rf var/cache/* var/cache/.*.cache var/log/* var/test/* '
 .PHONY: api-clear
 
+api-prepare: ## Prepare api commands
+	@echo 'APP_SECRET=99eaebf0b00eab05c0042c16fe4f71ce' > $(API_DIR)/.env.local
+	@echo 'APP_DEBUG=1' >> $(API_DIR)/.env.local
+.PHONY: api-prepare
+
 ##
 ## Api Dependencies
 ## ------
+
+api-deps-install: ## Install all api dependencies
+	$(COMPOSER_BIN) install
+.PHONY: api-deps-install
 
 composer-update: ## Update api dependencies
 	$(COMPOSER_BIN) update
