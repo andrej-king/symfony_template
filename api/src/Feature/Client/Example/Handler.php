@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Feature\Client\Example;
 
 use App\Infrastructure\PasswordHasher\PasswordHasher;
-use stdClass;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 final readonly class Handler
@@ -16,7 +15,7 @@ final readonly class Handler
     }
 
     #[AsMessageHandler]
-    public function __invoke(Request $message): ?stdClass
+    public function __invoke(Request $message): ?Response
     {
         $user = new Query()->getUserByEmail($message->email);
 
@@ -28,6 +27,11 @@ final readonly class Handler
             return null;
         }
 
-        return $user;
+        return new Response(
+            login: $user->login,
+            email: $user->email,
+            firstName: $user->firstName,
+            lastName: $user->lastName,
+        );
     }
 }
