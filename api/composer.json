@@ -7,6 +7,7 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "guzzlehttp/guzzle": "^7.9.3",
         "symfony/console": "7.2.*",
         "symfony/dotenv": "7.2.*",
         "symfony/flex": "^2.5",
@@ -17,9 +18,8 @@
         "symfony/runtime": "7.2.*",
         "symfony/serializer": "7.2.*",
         "symfony/validator": "7.2.*",
-        "symfony/yaml": "7.2.*"
-    },
-    "require-dev": {
+        "symfony/yaml": "7.2.*",
+        "webmozart/assert": "^1.11"
     },
     "config": {
         "allow-plugins": {

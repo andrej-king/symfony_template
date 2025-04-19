@@ -18,6 +18,9 @@ final readonly class Query
         $tempUserExample->firstName = 'John';
         $tempUserExample->lastName = 'Doe';
 
+        // test123
+        $tempUserExample->passwordHash = '$argon2i$v=19$m=65536,t=4,p=1$My41WG9sUTUzanNwMUdwNw$SV3W3a7rdd/jg2duYp/t5rB0270xwdp92EEiO/hyRdE';
+
         return $tempUserExample->email === $email ? $tempUserExample : null;
     }
 }
